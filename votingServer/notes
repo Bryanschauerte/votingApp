@@ -1,0 +1,97 @@
+run tests with the mocha command under node_modules
+"./node_modules/mocha/bin/mocha --compilers js:babel-core/register --recursive"
+--same as the packages.json srcipt test
+
+immutable List = array
+immutable Map = object
+(state trees) nested data structure of Lists Maps and other collections
+
+applying operations should produce new state tree leaving old untouched
+tests are simple like
+
+import {expect} from 'chai';
+
+describe('immutability', () => {
+
+  describe('a number', () => {
+
+    function increment(currentState) {
+      return currentState + 1;
+    }
+
+    it('is immutable', () => {
+      let state = 42;
+      let nextState = increment(state);
+
+      expect(nextState).to.equal(43);
+      expect(state).to.equal(42);
+    });
+
+  });
+
+});
+
+or a more complicated one
+
+import {List, Map} from 'immutable';
+import {expect} from 'chai';
+import {setEntries, next} from '../src/core';
+
+describe('application logic', () => {
+
+  // ..
+
+  describe('next', () => {
+
+    it('takes the next two entries under vote', () => {
+      const state = Map({
+        entries: List.of('Trainspotting', '28 Days Later', 'Sunshine')
+      });
+      const nextState = next(state); //meaning the next stage/state
+      expect(nextState).to.equal(Map({
+        vote: Map({
+          pair: List.of('Trainspotting', '28 Days Later')
+        }),
+        entries: List.of('Sunshine')
+      }));
+    });
+
+  });
+
+});
+
+export function vote(state, entry) {
+  return state.updateIn(
+    ['vote', 'tally', entry],
+    0,
+    tally => tally + 1
+  );
+}
+updateIn says to reach into the nested structure vote.tally.entry and apply the function there
+
+for the test =>
+it('adds to existing tally for the voted entry', () => {
+     const state = Map({
+       vote: Map({
+         pair: List.of('Trainspotting', '28 Days Later'),
+         tally: Map({
+           'Trainspotting': 3,
+           '28 Days Later': 2
+         })
+       }),
+       entries: List()
+     });
+^
+
+A few power-tools allow for reading and operating on nested data.
+The most useful are mergeDeep, getIn, setIn, and updateIn, found on List, Map and OrderedMap.
+
+
+This tutorial focuses on test first. 
+Think about the state of your application.
+Create tests first.
+Create the core logic of the application using pure functions. (core.js)
+test each piece(core_spec.js)
+
+
+Object.freeze()
